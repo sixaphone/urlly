@@ -1,0 +1,47 @@
+version: '3.9'
+
+volumes:
+  urlly_pg_data:
+  urlly_cache_data:
+
+networks:
+  urlly:
+    driver: bridge
+
+services:
+  pgsql:
+    image: postgres:14
+    restart: "on-failure"
+    user: postgres
+    networks:
+      - urlly
+    volumes:
+      - urlly_pg_data:/var/lib/postgresql/data
+    ports:
+      - 127.0.0.1:5432:5432
+    environment:
+      POSTGRES_PASSWORD: urlly_secret
+      POSTGRES_USER: urlly
+      POSTGRES_DB: urlly
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d urlly -U urlly" ] 
+      interval: 30s
+      timeout: 60s
+      retries: 5
+      start_period: 80s
+
+  redis:
+    image: redis:alpine
+    restart: "on-failure"
+    command: /bin/sh -c "redis-server --requirepass urlly_secret"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
+      interval: 5s
+      timeout: 25s
+      retries: 5
+    ports:
+      - 127.0.0.1:6379:6379
+    volumes:
+      - urlly_cache_data:/data
+    networks:
+      - urlly
