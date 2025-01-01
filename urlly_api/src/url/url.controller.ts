@@ -8,7 +8,7 @@ import {
   Redirect,
 } from '@nestjs/common';
 import { UrlService } from './url.service';
-import { ShortenDto } from './dto/shorten.dto';
+import { CreateUrlDto } from './dto/shorten.dto';
 
 @Controller()
 export class UrlController {
@@ -25,12 +25,20 @@ export class UrlController {
   }
 
   @Post('shorten')
-  public shortenUrl(@Body() payload: ShortenDto) {
-    return this.urlService.shorten(payload.url);
+  public async shortenUrl(@Body() payload: CreateUrlDto) {
+    const url = await this.urlService.shorten(payload.url);
+
+    return {
+      url,
+    };
   }
 
   @Post('lengthen')
-  public lengthenUrl() {
-    return 'Get all urls';
+  public async lengthenUrl(@Body() payload: CreateUrlDto) {
+    const url = await this.urlService.lengthen(payload.url);
+
+    return {
+      url,
+    };
   }
 }

@@ -1,6 +1,6 @@
 import { IsUrl } from 'class-validator';
 
-export class ShortenDto {
+export class CreateUrlDto {
   @IsUrl()
   url: string;
 }
