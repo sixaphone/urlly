@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { UrlController } from './url.controller';
 
 describe(UrlController.name, () => {
-  let urlController: UrlController;
+  // let urlController: UrlController;
 
   beforeEach(async () => {
     const app: TestingModule = await Test.createTestingModule({

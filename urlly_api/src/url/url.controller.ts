@@ -1,15 +1,19 @@
-import { Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post } from '@nestjs/common';
+import { UrlService } from './url.service';
+import { ShortenDto } from './dto/shorten.dto';
 
 @Controller()
 export class UrlController {
+  constructor(private readonly urlService: UrlService) {}
+
   @Get()
   public getAllUrls() {
-    return 'Get all urls';
+    return this.urlService.getAllUrls();
   }
 
   @Post('shorten')
-  public shortenUrl() {
-    return 'Get all urls';
+  public shortenUrl(@Body() payload: ShortenDto) {
+    return this.urlService.shorten(payload.url);
   }
 
   @Post('lengthen')
