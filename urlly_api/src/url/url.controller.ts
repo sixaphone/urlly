@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { UrlService } from './url.service';
 import { ShortenDto } from './dto/shorten.dto';
 
@@ -6,9 +6,9 @@ import { ShortenDto } from './dto/shorten.dto';
 export class UrlController {
   constructor(private readonly urlService: UrlService) {}
 
-  @Get()
-  public getAllUrls() {
-    return this.urlService.getAllUrls();
+  @Get('/:slug')
+  public getBySlug(@Param('slug') slug: string) {
+    return this.urlService.getUrlBySlug(slug);
   }
 
   @Post('shorten')

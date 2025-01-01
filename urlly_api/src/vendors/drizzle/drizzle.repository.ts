@@ -1,83 +1,122 @@
 import type {
   Table,
-  InferSelectModel,
   InferInsertModel,
+  InferSelectModel,
   SQL,
 } from 'drizzle-orm';
 import { Injectable } from '@nestjs/common';
-import type { DrizzleClientDatabase, InferValueType } from './interfaces';
-import { InjectClient } from './decorators/inject-client.decorator';
+import type {
+  DrizzleDatabaseType,
+  DrizzleSelect,
+  DrizzleDatabase,
+  DrizzleInsert,
+  DrizzleUpdate,
+} from './interfaces';
 
 @Injectable()
-export class DrizzleRepository<TEntity extends Table> {
+export class DrizzleRepository<
+  TSchema extends Record<string, Table>,
+  TTable extends keyof TSchema,
+  TType extends DrizzleDatabaseType,
+  TEntity extends Table = TSchema[TTable],
+> {
   constructor(
-    @InjectClient()
-    private readonly _client: DrizzleClientDatabase<Record<string, TEntity>>,
+    private readonly _client: DrizzleDatabase<TType, TSchema>,
     private readonly entity: TEntity,
   ) {}
 
-  public get client(): Readonly<typeof this._client> {
+  public get client(): DrizzleDatabase<TType, TSchema> {
     return this._client;
   }
 
-  public select(): Promise<InferSelectModel<TEntity>[]>;
-  public select<TSelect>(
+  public select(): DrizzleSelect<
+    DrizzleDatabase<TType, TSchema>,
+    TTable & string,
+    InferSelectModel<TEntity>
+  >;
+  public select<TSelect extends Record<string, unknown>>(
     select: TSelect,
-  ): Promise<{ [K in keyof TSelect]: InferValueType<TSelect[K]> }>;
-  public select<TSelect>(select?: TSelect) {
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-expect-error
+  ): DrizzleSelect<
+    DrizzleDatabase<TType, TSchema>,
+    TTable & string,
+    { [K in keyof TSelect]: TSelect[K] extends SQL<infer U> ? U : TSelect[K] }
+  >;
+  public select<TSelect extends Record<string, unknown>>(select?: TSelect) {
+    // @ts-expect-error - error is due to ts incompatibility with types but they are in fact not a problem
     return this._client.select(select).from(this.entity);
+  }
+
+  public selectWhere(
+    where: SQL<unknown>,
+  ): DrizzleSelect<
+    DrizzleDatabase<TType, TSchema>,
+    TTable & string,
+    InferSelectModel<TEntity>
+  >;
+  public selectWhere<TSelect extends Record<string, unknown>>(
+    where: SQL<unknown>,
+    select: TSelect,
+  ): DrizzleSelect<
+    DrizzleDatabase<TType, TSchema>,
+    TTable & string,
+    { [K in keyof TSelect]: TSelect[K] extends SQL<infer U> ? U : TSelect[K] }
+  >;
+  public selectWhere<TSelect extends Record<string, unknown>>(
+    where: SQL<unknown>,
+    select?: TSelect,
+  ) {
+    // @ts-expect-error - error is due to ts incompatibility with types but they are in fact not a problem
+    return this._client.select(select).from(this.entity).where(where);
   }
 
   public insert<TInsert extends InferInsertModel<TEntity>>(
     values: TInsert,
-  ): Promise<InferSelectModel<TEntity>>;
+  ): DrizzleInsert<TType, TEntity, TInsert>;
   public insert<TInsert extends InferInsertModel<TEntity>>(
     values: TInsert[],
-  ): Promise<InferSelectModel<TEntity>[]>;
+  ): DrizzleInsert<TType, TEntity, TInsert[]>;
   public insert<TInsert extends InferInsertModel<TEntity>>(
     values: TInsert | TInsert[],
-  ): Promise<InferSelectModel<TEntity> | InferSelectModel<TEntity>[]> {
-    return this._client
-      .insert(this.entity)
-      .values(values as TInsert)
-      .returning() as unknown as Promise<
-      InferSelectModel<TEntity> | InferSelectModel<TEntity>[]
-    >;
+  ) {
+    // @ts-expect-error - error is due to ts incompatibility with types but they are in fact not a problem
+    return this._client.insert(this.entity).values(values as TInsert);
   }
 
   public update<TUpdate extends Partial<InferInsertModel<TEntity>>>(
-    set: TUpdate,
+    values: TUpdate,
+  ): DrizzleUpdate<TType, TEntity, TUpdate>;
+  public update<TUpdate extends Partial<InferInsertModel<TEntity>>>(
+    values: TUpdate,
+  ) {
+    // @ts-expect-error - error is due to ts incompatibility with types but they are in fact not a problem
+    return this._client.update(this.entity).set(values);
+  }
+
+  public updateWhere<TUpdate extends Partial<InferInsertModel<TEntity>>>(
     where: SQL<unknown>,
-  ): Promise<InferSelectModel<TEntity>>;
-  public update<TUpdate extends Partial<InferInsertModel<TEntity>>>(
-    set: TUpdate,
-    where: SQL<unknown>[],
-  ): Promise<InferSelectModel<TEntity>[]>;
-  public update<TUpdate extends Partial<InferInsertModel<TEntity>>>(
-    set: TUpdate,
-    where: SQL<unknown> | SQL<unknown>[],
-  ): Promise<InferSelectModel<TEntity> | InferSelectModel<TEntity>[]> {
-    return this._client
-      .update(this.entity)
-      .set(set)
-      .where(where as SQL<unknown>)
-      .returning() as unknown as Promise<
-      InferSelectModel<TEntity> | InferSelectModel<TEntity>[]
-    >;
+    values: TUpdate,
+  ): DrizzleUpdate<TType, TEntity, TUpdate>;
+  public updateWhere<TUpdate extends Partial<InferInsertModel<TEntity>>>(
+    where: SQL<unknown>,
+    values: TUpdate,
+  ) {
+    // @ts-expect-error - error is due to ts incompatibility with types but they are in fact not a problem
+    return this._client.update(this.entity).set(values).where(where);
   }
 
-  public delete(where: SQL<unknown>): Promise<InferSelectModel<TEntity>>;
-  public delete(where: SQL<unknown>[]): Promise<InferSelectModel<TEntity>[]>;
-  public delete(
-    where: SQL<unknown> | SQL<unknown>[],
-  ): Promise<InferSelectModel<TEntity> | InferSelectModel<TEntity>[]> {
-    return this._client
-      .delete(this.entity)
-      .where(where as SQL<unknown>)
-      .returning() as unknown as Promise<
-      InferSelectModel<TEntity> | InferSelectModel<TEntity>[]
-    >;
+  public delete(): ReturnType<typeof this._client.delete>;
+  public delete() {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    // @ts-expect-error - This is a valid return type
+    return this._client.delete(this.entity);
+  }
+
+  public deleteWhere(
+    where: SQL<unknown>,
+  ): ReturnType<typeof this._client.delete>;
+  public deleteWhere(where: SQL<unknown>) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    // @ts-expect-error - This is a valid return type
+    return this._client.delete(this.entity).where(where);
   }
 }

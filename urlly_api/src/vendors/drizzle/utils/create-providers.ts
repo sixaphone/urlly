@@ -1,10 +1,8 @@
 import { drizzle as drizzleSqlite } from 'drizzle-orm/libsql';
 import { drizzle as drizzleBetterSqlite3 } from 'drizzle-orm/better-sqlite3';
+import { createClient } from '@libsql/client';
+import type { DrizzleModuleOptions, DrizzleDatabase } from '../interfaces';
 import { DRIZZLE_OPTIONS_TOKEN } from '../drizzle.module-definitions';
-import type {
-  DrizzleClientDatabase,
-  DrizzleModuleOptions,
-} from '../interfaces';
 import { getClientToken } from './get-client-token';
 
 export const createProviders = (name?: string) => [
@@ -12,21 +10,27 @@ export const createProviders = (name?: string) => [
     provide: getClientToken(name),
     useFactory: (
       options: DrizzleModuleOptions,
-    ): DrizzleClientDatabase<typeof options.schema> => {
-      const { type, schema, ...connection } = options;
+    ): DrizzleDatabase<typeof options.type, typeof options.schema> => {
+      const { type, schema, ...connectionConfig } = options;
 
       switch (type) {
         case 'sqlite': {
-          return drizzleSqlite({
-            schema,
-            connection,
-          });
+          const client = createClient(connectionConfig);
+          return drizzleSqlite(client, { schema }) as DrizzleDatabase<
+            typeof options.type,
+            typeof options.schema
+          >;
         }
         case 'better-sqlite3': {
-          return drizzleBetterSqlite3({
+          return drizzleBetterSqlite3(connectionConfig, {
             schema,
-            connection,
-          });
+          }) as DrizzleDatabase<
+            typeof options.type,
+            typeof options.schema
+          >;
+        }
+        default: {
+          throw new Error(`Unsupported database type: ${type}`);
         }
       }
     },

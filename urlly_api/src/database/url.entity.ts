@@ -10,6 +10,8 @@ export const urls = sqliteTable('urls', {
     .notNull(),
 });
 
+export type UrlEntity = typeof urls;
+
 export type CreateUrl = typeof urls.$inferInsert;
 
 export type SelectUrl = typeof urls.$inferSelect;
