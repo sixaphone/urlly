@@ -4,9 +4,10 @@ import { InjectClient } from '../vendors/drizzle/decorators/inject-client.decora
 import { Schema } from '../database/schema';
 import { InjectRepository } from '../vendors/drizzle/decorators/inject-repository.decorator';
 import { DrizzleRepository } from '../vendors/drizzle/drizzle.repository';
-import { RetryWrapper } from '../transaction.wrapper';
+import { RetryWrapper } from '../retry.wrapper';
 import { eq } from 'drizzle-orm';
 import { DrizzleDatabase } from 'src/vendors/drizzle/interfaces';
+import { SlugService } from 'src/slug.service';
 
 @Injectable()
 export class UrlService {
@@ -24,7 +25,23 @@ export class UrlService {
           .insert(urls)
           .values({
             target: url,
-            slug: new Date().getTime().toString(),
+            slug: SlugService.short(),
+          })
+          .returning();
+      });
+    });
+
+    return retry.execute();
+  }
+
+  public async lengthen(url: string) {
+    const retry = new RetryWrapper(() => {
+      return this.drizzle.transaction((tx) => {
+        return tx
+          .insert(urls)
+          .values({
+            target: url,
+            slug: SlugService.long(),
           })
           .returning();
       });
