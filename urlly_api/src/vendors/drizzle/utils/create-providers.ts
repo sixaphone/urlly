@@ -24,10 +24,7 @@ export const createProviders = (name?: string) => [
         case 'better-sqlite3': {
           return drizzleBetterSqlite3(connectionConfig, {
             schema,
-          }) as DrizzleDatabase<
-            typeof options.type,
-            typeof options.schema
-          >;
+          }) as DrizzleDatabase<typeof options.type, typeof options.schema>;
         }
         default: {
           throw new Error(`Unsupported database type: ${type}`);
