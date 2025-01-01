@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpRedirectResponse,
+  Param,
+  Post,
+  Redirect,
+} from '@nestjs/common';
 import { UrlService } from './url.service';
 import { ShortenDto } from './dto/shorten.dto';
 
@@ -7,8 +15,13 @@ export class UrlController {
   constructor(private readonly urlService: UrlService) {}
 
   @Get('/:slug')
-  public getBySlug(@Param('slug') slug: string) {
-    return this.urlService.getUrlBySlug(slug);
+  @Redirect('/', 301)
+  public async getBySlug(@Param('slug') slug: string) {
+    const { target } = await this.urlService.getUrlBySlug(slug);
+
+    return {
+      url: target,
+    } as HttpRedirectResponse;
   }
 
   @Post('shorten')

@@ -7,10 +7,11 @@ import type {
 import { Injectable } from '@nestjs/common';
 import type {
   DrizzleDatabaseType,
-  DrizzleSelect,
   DrizzleDatabase,
   DrizzleInsert,
   DrizzleUpdate,
+  DrizzleSelectResult,
+  InferValueType,
 } from './interfaces';
 
 @Injectable()
@@ -29,44 +30,70 @@ export class DrizzleRepository<
     return this._client;
   }
 
-  public select(): DrizzleSelect<
-    DrizzleDatabase<TType, TSchema>,
+  public select(): DrizzleSelectResult<
+    TType,
     TTable & string,
     InferSelectModel<TEntity>
   >;
   public select<TSelect extends Record<string, unknown>>(
     select: TSelect,
-  ): DrizzleSelect<
-    DrizzleDatabase<TType, TSchema>,
+  ): DrizzleSelectResult<
+    TType,
     TTable & string,
-    { [K in keyof TSelect]: TSelect[K] extends SQL<infer U> ? U : TSelect[K] }
+    {
+      [K in keyof TSelect]: TSelect[K] extends SQL<infer U>
+        ? U
+        : InferValueType<TSelect[K]>;
+    }
   >;
   public select<TSelect extends Record<string, unknown>>(select?: TSelect) {
     // @ts-expect-error - error is due to ts incompatibility with types but they are in fact not a problem
-    return this._client.select(select).from(this.entity);
+    const query = this._client.select(select).from(this.entity);
+    return query as DrizzleSelectResult<
+      TType,
+      TTable & string,
+      TSelect extends Record<string, unknown>
+        ? {
+            [K in keyof TSelect]: TSelect[K] extends SQL<infer U>
+              ? U
+              : InferValueType<TSelect[K]>;
+          }
+        : InferSelectModel<TEntity>
+    >;
   }
 
   public selectWhere(
     where: SQL<unknown>,
-  ): DrizzleSelect<
-    DrizzleDatabase<TType, TSchema>,
-    TTable & string,
-    InferSelectModel<TEntity>
-  >;
+  ): DrizzleSelectResult<TType, TTable & string, InferSelectModel<TEntity>>;
   public selectWhere<TSelect extends Record<string, unknown>>(
     where: SQL<unknown>,
     select: TSelect,
-  ): DrizzleSelect<
-    DrizzleDatabase<TType, TSchema>,
+  ): DrizzleSelectResult<
+    TType,
     TTable & string,
-    { [K in keyof TSelect]: TSelect[K] extends SQL<infer U> ? U : TSelect[K] }
+    {
+      [K in keyof TSelect]: TSelect[K] extends SQL<infer U>
+        ? U
+        : InferValueType<TSelect[K]>;
+    }
   >;
   public selectWhere<TSelect extends Record<string, unknown>>(
     where: SQL<unknown>,
     select?: TSelect,
   ) {
     // @ts-expect-error - error is due to ts incompatibility with types but they are in fact not a problem
-    return this._client.select(select).from(this.entity).where(where);
+    const query = this._client.select(select).from(this.entity).where(where);
+    return query as DrizzleSelectResult<
+      TType,
+      TTable & string,
+      TSelect extends Record<string, unknown>
+        ? {
+            [K in keyof TSelect]: TSelect[K] extends SQL<infer U>
+              ? U
+              : InferValueType<TSelect[K]>;
+          }
+        : InferSelectModel<TEntity>
+    >;
   }
 
   public insert<TInsert extends InferInsertModel<TEntity>>(

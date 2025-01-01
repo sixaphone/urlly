@@ -51,7 +51,10 @@ export class UrlService {
   }
 
   public async getUrlBySlug(slug: string) {
-    const [target] = await this.urlRepo.selectWhere(eq(urls.slug, slug));
+    const [target] = await this.urlRepo.selectWhere(eq(urls.slug, slug), {
+      id: urls.id,
+      target: urls.target,
+    });
 
     if (!target) {
       throw new NotFoundException();

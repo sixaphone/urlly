@@ -3,7 +3,13 @@ import type { LibSQLDatabase } from 'drizzle-orm/libsql';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import type { MySql2Database } from 'drizzle-orm/mysql2';
 import type { Config } from '@libsql/client';
-import type { AnyColumn, Placeholder, SQL, Table } from 'drizzle-orm';
+import type {
+  AnyColumn,
+  ColumnsSelection,
+  Placeholder,
+  SQL,
+  Table,
+} from 'drizzle-orm';
 import type {
   SQLiteInsertBuilder,
   SQLiteSelect,
@@ -72,6 +78,18 @@ export type DrizzleSelect<
     ? PgSelect<TTable, TSelect>
     : TDatabase extends MySql2Database<any>
       ? MySqlSelect<TTable, TSelect>
+      : never;
+
+export type DrizzleSelectResult<
+  TType extends DrizzleDatabaseType,
+  TTable extends string,
+  TSelect,
+> = TType extends 'sqlite' | 'better-sqlite3'
+  ? SQLiteSelect<TTable, 'async', TSelect> & Promise<TSelect[]>
+  : TType extends 'postgres'
+    ? PgSelect<TTable, TSelect & ColumnsSelection> & Promise<TSelect[]>
+    : TType extends 'mysql'
+      ? MySqlSelect<TTable, TSelect & ColumnsSelection> & Promise<TSelect[]>
       : never;
 
 export type DrizzleInsert<
