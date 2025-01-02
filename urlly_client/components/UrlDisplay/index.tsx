@@ -17,13 +17,13 @@ export default function UrlDisplay({
       <div className="label">
         <span className="label-text">{label}</span>
       </div>
-      <label className="input input-bordered flex justify-between items-center p-0 pl-2">
+      <label className="h-auto input input-bordered flex justify-between items-center p-0 pl-2">
         <Link target="_blank" href={url}>
-          {url}
+          <p className="text-wrap break-all py-2">{url}</p>
         </Link>
         <div className="tooltip" data-tip={copyText}>
           <button
-            disabled={url !== "#"}
+            disabled={url === "#"}
             className="btn btn-ghost"
             onClick={() => {
               setCopyText(() => "Copied!");

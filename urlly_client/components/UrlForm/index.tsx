@@ -8,7 +8,7 @@ import UrlDisplay from "../UrlDisplay";
 const initialData = {
   short: "#",
   long: "#",
-  message: '',
+  message: "",
 };
 
 export default function UrlForm() {
@@ -19,8 +19,8 @@ export default function UrlForm() {
   );
 
   return (
-    <div className="container flex justify-center form gap-10 flex-col">
-      <form action={formAction} className="w-full form gap-10 flex flex-col">
+    <div className="container flex justify-center form gap-6 flex-col">
+      <form action={formAction} className="w-full form gap-2 flex flex-col">
         <div>
           <div className="label">
             <span className="label-text">What is the URL?</span>
@@ -30,13 +30,17 @@ export default function UrlForm() {
           </div>
           <input
             type="url"
-            name='url'
+            name="url"
             placeholder="https://google.com"
             className="input input-bordered input-primary w-full"
             required
           />
           <div className="label">
-            {state.message && <span className="label-text-alt text-red-500">{state.message}</span>}
+            {state.message && (
+              <span className="label-text-alt text-red-500">
+                {state.message}
+              </span>
+            )}
           </div>
         </div>
 
@@ -49,8 +53,10 @@ export default function UrlForm() {
         </button>
       </form>
 
-      <UrlDisplay label="Shortened" url={state.short} />
-      <UrlDisplay label="Lengthened" url={state.long} />
+      <div className="flex flex-col gap-2">
+        <UrlDisplay label="Shortened" url={state.short} />
+        <UrlDisplay label="Lengthened" url={state.long} />
+      </div>
     </div>
   );
 }
