@@ -63,7 +63,7 @@ export class UrlService {
     try {
       const [response] = await retry.execute();
 
-      return `${this.config.scheme}://${this.config.host}:${this.config.port}/${response.slug}`;
+      return `${this.config.scheme}://${this.config.host}/${response.slug}`;
     } catch (error) {
       throw new ConflictException('Unable to shorten url', { cause: error });
     }
