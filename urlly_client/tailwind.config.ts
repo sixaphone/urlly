@@ -15,5 +15,8 @@ export default {
       },
     },
   },
+  daisyui: {
+    themes: ["sunset"],
+  },
   plugins: [daisyui],
 } satisfies Config & { daisyui?: DaisyUIConfig };
