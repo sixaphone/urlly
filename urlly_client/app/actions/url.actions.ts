@@ -41,60 +41,93 @@ const params = new URLSearchParams({
   car: "rentalcars",
 });
 
-console.log(params.toString());
-
+async function fetchWithRetry(url: string, options: RequestInit, maxRetries = 3, initialDelay = 2000) {
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      const response = await fetch(url, {
+        ...options,
+        signal: AbortSignal.timeout(30000), // 30-second timeout
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      return response;
+    } catch (error) {
+      const isLastAttempt = i === maxRetries - 1;
+      if (isLastAttempt) {
+        throw error;
+      }
+      
+      // Wait with exponential backoff
+      await new Promise(resolve => 
+        setTimeout(resolve, initialDelay * Math.pow(2, i))
+      );
+    }
+  }
+}
 export async function generateUrl(
-  _prevState: { short: string; long: string },
+  _prevState: { short: string; long: string; message?: string; status?: string },
   formData: FormData
 ) {
-  const url = formData.get("url") as string;
+  try {
+    const url = formData.get("url") as string;
+    const apiUrl = process.env.API_URL;
+    const body = JSON.stringify({ url });
+    const headers = {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    };
 
-  const apiUrl = process.env.API_URL;
+    // Try to make requests with retry logic
+    const [shortenRes, lengthenRes] = await Promise.allSettled([
+      fetchWithRetry(`${apiUrl}/shorten`, {
+        body,
+        headers,
+        method: "POST",
+      }),
+      fetchWithRetry(`${apiUrl}/lengthen`, {
+        body,
+        headers,
+        method: "POST",
+      }),
+    ]);
 
-  const body = JSON.stringify({ url });
-  const headers = {
-    "Content-Type": "application/json",
-    Accept: "application/json",
-  };
+    if (shortenRes.status === "rejected" || lengthenRes.status === "rejected") {
+      return {
+        message: "Server is still starting up or unavailable. Please try again in a moment.",
+        short: "#",
+        long: "#",
+      };
+    }
 
-  const [shortenRes, lengthenRes] = await Promise.allSettled([
-    fetch(`${apiUrl}/shorten`, {
-      body,
-      headers,
-      method: "POST",
-    }),
-    fetch(`${apiUrl}/lengthen`, {
-      body,
-      headers,
+    const [shortened, lengthened] = await Promise.all([
+      shortenRes!.value!.json(),
+      lengthenRes!.value!.json(),
+    ]);
 
-      method: "POST",
-    }),
-  ]);
+    if (shortened.error || lengthened.error) {
+      const error = shortened.message ?? lengthened.message;
+      return {
+        message: error[0],
+        short: "#",
+        long: "#",
+      };
+    }
 
-  if (shortenRes.status === "rejected" || lengthenRes.status === "rejected") {
     return {
-      message: "An error occurred. Please try again later",
+      short: shortened.url,
+      long: `${lengthened.url}?${params.toString()}`,
+    };
+
+  } catch (error) {
+    console.error('URL generation error:', error);
+    return {
+      status: 'error',
+      message: "The server might be starting up. Please try again in a minute.",
       short: "#",
       long: "#",
     };
   }
-
-  const [shortened, lengthened] = await Promise.all([
-    shortenRes.value.json(),
-    lengthenRes.value.json(),
-  ]);
-
-  if (shortened.error || lengthened.error) {
-    const error = shortened.message ?? lengthened.message;
-    return {
-      message: error[0],
-      short: "#",
-      long: "#",
-    };
-  }
-
-  return {
-    short: shortened.url,
-    long: `${lengthened.url}?${params.toString()}`,
-  };
 }
