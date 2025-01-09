@@ -5,15 +5,17 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { urls } from '../database/url.entity';
-import { InjectClient } from '../vendors/drizzle/decorators/inject-client.decorator';
 import { Schema } from '../database/schema';
-import { InjectRepository } from '../vendors/drizzle/decorators/inject-repository.decorator';
-import { DrizzleRepository } from '../vendors/drizzle/drizzle.repository';
 import { RetryWrapper } from '../retry.wrapper';
 import { eq } from 'drizzle-orm';
-import { DrizzleDatabase } from '../vendors/drizzle/interfaces';
 import { SlugService } from '../slug.service';
 import hostConfig, { type HostConfig } from '../config/host.config';
+import {
+  DrizzleDatabase,
+  DrizzleRepository,
+  InjectClient,
+  InjectRepository,
+} from '@sixaphone/nestjs-drizzle';
 
 @Injectable()
 export class UrlService {

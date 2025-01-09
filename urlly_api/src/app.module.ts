@@ -2,8 +2,8 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { UrlModule } from './url/url.module';
 import databaseConfig, { type DatabaseConfig } from './config/database.config';
-import { DrizzleModule } from './vendors/drizzle/drizzle.module';
 import { schema } from './database/schema';
+import { DrizzleModule } from '@sixaphone/nestjs-drizzle';
 
 @Module({
   imports: [

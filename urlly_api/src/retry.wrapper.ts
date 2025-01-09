@@ -4,8 +4,6 @@ type RetryWrapperOptions = {
 
 class MaxRetryAttemptsError extends Error {
   constructor(cause?: Error) {
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-expect-error
     super('Max retry attempts reached', { cause });
   }
   public readonly code: string = MaxRetryAttemptsError.name;

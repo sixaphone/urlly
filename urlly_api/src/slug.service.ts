@@ -1,11 +1,16 @@
-import { nanoid } from 'nanoid';
+import nanoid from 'nanoid';
 
 export class SlugService {
+  private static nanoid = nanoid.customAlphabet(
+    '1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ',
+    21,
+  );
+
   static short() {
-    return nanoid(14);
+    return SlugService.nanoid(14);
   }
 
   static long() {
-    return nanoid(36);
+    return SlugService.nanoid(36);
   }
 }
