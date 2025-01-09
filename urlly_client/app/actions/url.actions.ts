@@ -110,7 +110,7 @@ export async function generateUrl(
     if (shortened.error || lengthened.error) {
       const error = shortened.message ?? lengthened.message;
       return {
-        message: error[0],
+        message: error[0] ?? (error ?? "An error occurred."),
         short: "#",
         long: "#",
       };
@@ -124,7 +124,6 @@ export async function generateUrl(
   } catch (error) {
     console.error('URL generation error:', error);
     return {
-      status: 'error',
       message: "The server might be starting up. Please try again in a minute.",
       short: "#",
       long: "#",
